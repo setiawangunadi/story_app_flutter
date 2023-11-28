@@ -9,6 +9,7 @@ import 'package:story_app/screens/add_story_screen.dart';
 import 'package:story_app/screens/detail_story_screen.dart';
 import 'package:story_app/screens/home_screen.dart';
 import 'package:story_app/screens/login_screen.dart';
+import 'package:story_app/screens/maps_screen.dart';
 import 'package:story_app/screens/register_screen.dart';
 
 class MyRouterDelegate extends RouterDelegate
@@ -24,6 +25,8 @@ class MyRouterDelegate extends RouterDelegate
   bool isClickLogin = false;
   bool isClickAddStory = false;
   bool isClickDetailStory = false;
+  bool isClickMaps = false;
+  bool isBackMaps = false;
   String? storyId;
 
   @override
@@ -84,7 +87,12 @@ class MyRouterDelegate extends RouterDelegate
             maintainState: false,
             child: BlocProvider(
               create: (context) => AddStoryBloc(),
-              child: const AddStoryScreen(),
+              child: AddStoryScreen(
+                onTappedMaps: (bool isSelected) {
+                  isClickMaps = isSelected;
+                  notifyListeners();
+                },
+              ),
             ),
           ),
         if (isClickDetailStory == true)
@@ -95,6 +103,12 @@ class MyRouterDelegate extends RouterDelegate
               create: (context) => DetailStoryBloc(),
               child: DetailStoryScreen(id: storyId ?? ''),
             ),
+          ),
+        if (isClickMaps == true)
+          const MaterialPage(
+            key: ValueKey("MapsPage"),
+            maintainState: false,
+            child: MapsScreen(),
           ),
       ],
       onPopPage: (route, result) {

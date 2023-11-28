@@ -7,7 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:story_app/blocs/add_story/add_story_bloc.dart';
 
 class AddStoryScreen extends StatefulWidget {
-  const AddStoryScreen({super.key});
+  final Function(bool) onTappedMaps;
+
+  const AddStoryScreen({super.key, required this.onTappedMaps});
 
   @override
   State<AddStoryScreen> createState() => _AddStoryScreenState();
@@ -85,20 +87,44 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
                   ],
                 ),
                 Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.all(16.0),
-                    shape: const Border.fromBorderSide(
-                        BorderSide(color: Colors.black)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      child: TextFormField(
-                        controller: ctrlDesc,
-                        maxLines: 8, //or null
-                        decoration: const InputDecoration.collapsed(
-                            hintText: "Description"),
+                  color: Colors.white,
+                  margin: const EdgeInsets.all(16.0),
+                  shape: const Border.fromBorderSide(
+                      BorderSide(color: Colors.black)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: TextFormField(
+                      controller: ctrlDesc,
+                      maxLines: 8, //or null
+                      decoration: const InputDecoration.collapsed(
+                          hintText: "Description"),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      debugPrint("ON CLICK MAPS");
+                      widget.onTappedMaps(true);
+                    },
+                    child: TextFormField(
+                      enabled: false,
+                      decoration: const InputDecoration(
+                        suffixIcon: Icon(Icons.location_on),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
-                    )),
+                    ),
+                  ),
+                ),
                 Container(
                   width: MediaQuery.of(context).size.width,
                   margin: const EdgeInsets.symmetric(horizontal: 16.0),
