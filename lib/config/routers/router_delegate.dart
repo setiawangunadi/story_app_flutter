@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:story_app/blocs/add_story/add_story_bloc.dart';
 import 'package:story_app/blocs/detail_story/detail_story_bloc.dart';
 import 'package:story_app/blocs/home/home_bloc.dart';
@@ -28,6 +29,8 @@ class MyRouterDelegate extends RouterDelegate
   bool isClickMaps = false;
   bool isBackMaps = false;
   String? storyId;
+  LatLng location = const LatLng(0.0, 0.0);
+  String? infoLocations;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +91,8 @@ class MyRouterDelegate extends RouterDelegate
             child: BlocProvider(
               create: (context) => AddStoryBloc(),
               child: AddStoryScreen(
+                locationData: location,
+                infoLocation: infoLocations ?? "",
                 onTappedMaps: (bool isSelected) {
                   isClickMaps = isSelected;
                   notifyListeners();
@@ -105,10 +110,25 @@ class MyRouterDelegate extends RouterDelegate
             ),
           ),
         if (isClickMaps == true)
-          const MaterialPage(
-            key: ValueKey("MapsPage"),
+          MaterialPage(
+            key: const ValueKey("MapsPage"),
             maintainState: false,
-            child: MapsScreen(),
+            child: MapsScreen(
+              onTappedLocation: (
+                bool isSelected,
+                LatLng locationSelected,
+                String infoLocation,
+              ) {
+                isClickMaps = false;
+                location = locationSelected;
+                // locationSelected = location;
+                // infoLocations = infoLocation;
+                debugPrint("INFO LOCATION $infoLocation");
+                debugPrint("INFO LOCATION SELECTED : $locationSelected");
+                debugPrint("INFO LOCATION SELECTED 2 : $location");
+                notifyListeners();
+              },
+            ),
           ),
       ],
       onPopPage: (route, result) {

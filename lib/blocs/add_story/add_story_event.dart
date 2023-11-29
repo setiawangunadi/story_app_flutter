@@ -8,8 +8,8 @@ class DoAddStory extends AddStoryEvent {
   final dynamic bytes;
   final String filename;
   final String filePath;
-  final Float? lat;
-  final Float? lon;
+  final dynamic lat;
+  final dynamic lon;
 
   DoAddStory({
     required this.description,

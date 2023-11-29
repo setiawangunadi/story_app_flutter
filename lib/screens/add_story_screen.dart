@@ -3,13 +3,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:story_app/blocs/add_story/add_story_bloc.dart';
 
 class AddStoryScreen extends StatefulWidget {
   final Function(bool) onTappedMaps;
+  final LatLng locationData;
+  final String infoLocation;
 
-  const AddStoryScreen({super.key, required this.onTappedMaps});
+  const AddStoryScreen({
+    super.key,
+    required this.onTappedMaps,
+    required this.locationData,
+    required this.infoLocation,
+  });
 
   @override
   State<AddStoryScreen> createState() => _AddStoryScreenState();
@@ -17,6 +25,7 @@ class AddStoryScreen extends StatefulWidget {
 
 class _AddStoryScreenState extends State<AddStoryScreen> {
   final TextEditingController ctrlDesc = TextEditingController();
+  final TextEditingController ctrlLocation = TextEditingController();
   late AddStoryBloc addStoryBloc;
   XFile? file;
   String? imagePath;
@@ -36,6 +45,7 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
             imagePath = null;
           });
           ctrlDesc.clear();
+          ctrlLocation.clear();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(state.data.message ?? ""),
           ));
@@ -102,6 +112,21 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
                     ),
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Location",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16.0,
@@ -113,10 +138,13 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
                       widget.onTappedMaps(true);
                     },
                     child: TextFormField(
+                      controller: ctrlLocation,
                       enabled: false,
-                      decoration: const InputDecoration(
-                        suffixIcon: Icon(Icons.location_on),
-                        border: OutlineInputBorder(
+                      decoration: InputDecoration(
+                        labelText:
+                            "${widget.locationData.latitude}, ${widget.locationData.longitude}",
+                        suffixIcon: const Icon(Icons.location_on),
+                        border: const OutlineInputBorder(
                           borderSide: BorderSide(
                             color: Colors.black,
                           ),
@@ -161,6 +189,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
         bytes: bytes,
         filename: fileName,
         filePath: file?.path ?? "",
+        lat: widget.locationData.latitude,
+        lon: widget.locationData.longitude,
       ),
     );
   }

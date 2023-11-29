@@ -21,8 +21,8 @@ class StoryRepository {
     required String description,
     required String imagePath,
     required String imageName,
-    double? latitude,
-    double? longitude,
+    dynamic latitude,
+    dynamic longitude,
   }) async {
 
     FormData formData = FormData.fromMap({
