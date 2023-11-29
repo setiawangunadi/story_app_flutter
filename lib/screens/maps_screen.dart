@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geo;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'package:geocoding/geocoding.dart' as geo;
+import 'package:story_app/screens/component/place_mark_widget.dart';
 
 class MapsScreen extends StatefulWidget {
   final Function(bool, LatLng, String) onTappedLocation;
@@ -14,6 +15,7 @@ class MapsScreen extends StatefulWidget {
 
 class _MapsScreenState extends State<MapsScreen> {
   late GoogleMapController mapController;
+  geo.Placemark? placemark;
   final dicodingOffice = const LatLng(-6.8957473, 107.6337669);
   final Set<Marker> markers = {};
   LatLng locationSelected = const LatLng(-6.8957473, 107.6337669);
@@ -21,81 +23,116 @@ class _MapsScreenState extends State<MapsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pilih Lokasi"),
-      ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            mapToolbarEnabled: false,
-            markers: markers,
-            initialCameraPosition: CameraPosition(
-              zoom: 18,
-              target: dicodingOffice,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        widget.onTappedLocation(
+          true,
+          const LatLng(0.0, 0.0),
+          infoLocation ?? "",
+        );
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Pilih Lokasi"),
+          leading: GestureDetector(
+            onTap: () => widget.onTappedLocation(
+              true,
+              const LatLng(0.0, 0.0),
+              infoLocation ?? "",
             ),
-            onMapCreated: (controller) {
-              final marker = Marker(
-                markerId: const MarkerId("source"),
-                position: dicodingOffice,
-              );
-              setState(() {
-                mapController = controller;
-                markers.add(marker);
-              });
-              setState(() {
-                mapController = controller;
-              });
-            },
-            onLongPress: (LatLng latLng) {
-              onLongPressGoogleMap(latLng);
-            },
+            child: const Icon(Icons.arrow_back),
           ),
-          Positioned(
-            top: 16,
-            right: 16,
-            child: FloatingActionButton(
-              child: const Icon(Icons.my_location),
-              onPressed: () {
-                onMyLocationButtonPress();
+        ),
+        body: Stack(
+          children: [
+            GoogleMap(
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              markers: markers,
+              initialCameraPosition: CameraPosition(
+                zoom: 18,
+                target: dicodingOffice,
+              ),
+              onMapCreated: (controller) async {
+                final info = await geo.placemarkFromCoordinates(
+                    dicodingOffice.latitude, dicodingOffice.longitude);
+                final place = info[0];
+                final street = place.street!;
+                final address =
+                    '${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+                setState(() {
+                  placemark = place;
+                });
+                defineMarker(dicodingOffice, street, address);
+                setState(() {
+                  mapController = controller;
+                });
+              },
+              onLongPress: (LatLng latLng) {
+                onLongPressGoogleMap(latLng);
               },
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 16,
-            right: 16,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: ElevatedButton(
-                onPressed: () => widget.onTappedLocation(
-                  true,
-                  locationSelected,
-                  infoLocation ?? "",
-                ),
-                style: const ButtonStyle(
-                    backgroundColor: MaterialStatePropertyAll(Colors.green)),
-                child: const Text(
-                  "Pilih Lokasi",
-                  style: TextStyle(
-                    color: Colors.white,
+            Positioned(
+              top: 16,
+              right: 16,
+              child: FloatingActionButton(
+                child: const Icon(Icons.my_location),
+                onPressed: () {
+                  onMyLocationButtonPress();
+                },
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 16,
+              right: 16,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: ElevatedButton(
+                  onPressed: () => widget.onTappedLocation(
+                    true,
+                    locationSelected,
+                    infoLocation ?? "",
+                  ),
+                  style: const ButtonStyle(
+                      backgroundColor: MaterialStatePropertyAll(Colors.green)),
+                  child: const Text(
+                    "Pilih Lokasi",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
-          )
-        ],
+            if (placemark == null)
+              const SizedBox()
+            else
+              Positioned(
+                bottom: 64,
+                right: 16,
+                left: 16,
+                child: PlaceMarkWidget(
+                  placeMark: placemark!,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  void defineMarker(LatLng latLng) {
+  void defineMarker(LatLng latLng, String street, String address) {
     final marker = Marker(
       markerId: const MarkerId("source"),
       position: latLng,
+      infoWindow: InfoWindow(
+        title: street,
+        snippet: address,
+      ),
     );
     setState(() {
       markers.clear();
@@ -113,7 +150,6 @@ class _MapsScreenState extends State<MapsScreen> {
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
       if (!serviceEnabled) {
-        print("Location services is not available");
         return;
       }
     }
@@ -121,7 +157,6 @@ class _MapsScreenState extends State<MapsScreen> {
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        print("Location permission is denied");
         return;
       }
     }
@@ -129,7 +164,19 @@ class _MapsScreenState extends State<MapsScreen> {
     locationData = await location.getLocation();
     final latLng = LatLng(locationData.latitude!, locationData.longitude!);
 
-    defineMarker(latLng);
+    final info =
+        await geo.placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+
+    final place = info[0];
+    final street = place.street;
+    final address =
+        '${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+    setState(() {
+      placemark = place;
+      locationSelected = latLng;
+    });
+
+    defineMarker(latLng, street ?? "", address);
 
     mapController.animateCamera(
       CameraUpdate.newLatLng(latLng),
@@ -137,17 +184,19 @@ class _MapsScreenState extends State<MapsScreen> {
   }
 
   void onLongPressGoogleMap(LatLng latLng) async {
-    defineMarker(latLng);
-
     final info =
         await geo.placemarkFromCoordinates(latLng.latitude, latLng.longitude);
-
+    final place = info[0];
+    final street = place.street!;
+    final address =
+        '${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
     setState(() {
-      locationSelected = latLng;
-      infoLocation = info[0].name;
+      placemark = place;
     });
+    defineMarker(latLng, street, address);
 
     debugPrint("INFO LOCATION UPDATE : $infoLocation");
+    debugPrint("INFO LOCATION SELECTED : $locationSelected");
 
     mapController.animateCamera(
       CameraUpdate.newLatLng(latLng),
