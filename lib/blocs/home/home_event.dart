@@ -5,8 +5,9 @@ abstract class HomeEvent {}
 
 class GetListStory extends HomeEvent {
   final int location;
+  final int page;
 
-  GetListStory({required this.location});
+  GetListStory({required this.location, required this.page});
 }
 
 class DoLogout extends HomeEvent {}

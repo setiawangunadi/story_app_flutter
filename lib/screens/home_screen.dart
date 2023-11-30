@@ -23,11 +23,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late HomeBloc homeBloc;
   GetStoriesResponseModel? dataStories;
+  int page = 1;
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     homeBloc = BlocProvider.of<HomeBloc>(context);
-    homeBloc.add(GetListStory(location: 0));
+    homeBloc.add(GetListStory(location: 0, page: page));
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent) {
+        homeBloc.add(GetListStory(location: 0, page: page));
+      }
+    });
     super.initState();
   }
 
@@ -37,11 +45,25 @@ class _HomeScreenState extends State<HomeScreen> {
       listener: (context, state) {
         if (state is OnSuccessHome) {
           setState(() {
-            dataStories = state.data;
+            if (state.totalPage < 3) {
+              dataStories = state.data;
+            } else {
+              if (state.data.listStory!.isNotEmpty) {
+                for (var i = 0; i < state.data.listStory!.length; i++) {
+                  dataStories?.listStory?.add(state.data.listStory![i]);
+                }
+              }
+            }
+            page = state.totalPage;
           });
         }
         if (state is OnSuccessLogout) {
           widget.onTappedLogout(false);
+        }
+        if (state is OnFailedHome) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.message),
+          ));
         }
       },
       builder: (context, state) {
@@ -86,8 +108,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               : ListView.builder(
+                  controller: scrollController,
                   itemCount: dataStories?.listStory?.length,
                   itemBuilder: (context, index) {
+                    if (index == dataStories?.listStory!.length) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
                     return GestureDetector(
                       onTap: () => widget.onTappedDetailStory(
                           true, dataStories?.listStory?[index].id ?? ""),

@@ -3,9 +3,15 @@ import 'package:story_app/config/data/network/canonical_path.dart';
 import 'package:story_app/config/data/network/dio_provider.dart';
 
 class StoryRepository {
-  Future<Response> getListStory() async {
+  Future<Response> getListStory({
+    required int page,
+    required int size,
+  }) async {
+    Map<String, dynamic>? queryParams = {"page": page, "size": size};
+
     final response = DioProvider().get(
       path: CanonicalPath.listStory,
+      queryParameters: queryParams,
     );
     return response;
   }
@@ -24,7 +30,6 @@ class StoryRepository {
     dynamic latitude,
     dynamic longitude,
   }) async {
-
     FormData formData = FormData.fromMap({
       'description': description,
       'photo': await MultipartFile.fromFile(imagePath, filename: imageName),

@@ -19,12 +19,13 @@ class DioProvider {
 
   factory DioProvider() => _instance;
 
-  Future<Response> get({required String path}) async {
+  Future<Response> get({required String path, Map<String, dynamic>? queryParameters}) async {
     try {
       var tokenId = await SharedPrefsStorage.getTokenId();
 
       final response = await dio.get(
         '$baseUrl$path',
+        queryParameters: queryParameters,
         options: Options(
           headers: {"Authorization": "Bearer $tokenId"},
         ),

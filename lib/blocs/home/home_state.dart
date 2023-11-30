@@ -9,8 +9,9 @@ class OnLoadingHome extends HomeState {}
 
 class OnSuccessHome extends HomeState {
   final GetStoriesResponseModel data;
+  final int totalPage;
 
-  OnSuccessHome({required this.data});
+  OnSuccessHome({required this.data, required this.totalPage});
 }
 
 class OnSuccessLogout extends HomeState {}

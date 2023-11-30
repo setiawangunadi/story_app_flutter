@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
 import 'package:story_app/config/data/local/shared_prefs_storage.dart';
 import 'package:story_app/config/models/get_stories_response_model.dart';
@@ -22,12 +23,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     try {
       emit(OnLoadingHome());
-      final response = await storyRepository.getListStory();
+      final response = await storyRepository.getListStory(page: event.page, size: 10);
       if (response.statusCode == 200) {
         GetStoriesResponseModel data =
             GetStoriesResponseModel.fromJson(response.data);
         if (data.error == false) {
-          emit(OnSuccessHome(data: data));
+          int page = event.page + 1;
+          emit(OnSuccessHome(data: data, totalPage: page));
         }
       }
     } catch (e) {
